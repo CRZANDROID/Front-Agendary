@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, FlatList, SectionList, SafeAreaView, StatusBar } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 
 const services = [
   { id: '1', name: 'Coronita CarWash', location: 'Tuxtla Gutierrez', image: require('../assets/carwash1.jpeg') },
@@ -10,7 +11,8 @@ const services = [
   { id: '5', name: 'Coronita CarWash', location: 'Tuxtla Gutierrez', image: require('../assets/carwash1.jpeg') },
 ];
 
-const HomeScreen = ({ navigation }) => {
+const HomeScreen = () => {
+  const navigation = useNavigation();
   const sections = [
     { title: 'Para ti', data: [services] },
     { title: 'Servicios', data: services },
@@ -21,7 +23,9 @@ const HomeScreen = ({ navigation }) => {
       <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
       <View style={styles.container}>
         <View style={styles.header}>
-          <FontAwesome name="bars" size={24} color="black" />
+          <TouchableOpacity onPress={() => navigation.openDrawer()}>
+            <FontAwesome name="bars" size={24} color="black" />
+          </TouchableOpacity>
           <Text style={styles.headerTitle}>Home</Text>
           <Image source={require('../assets/profile.jpg')} style={styles.profileImage} />
         </View>
