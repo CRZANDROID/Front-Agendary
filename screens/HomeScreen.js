@@ -1,18 +1,28 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, FlatList, SectionList, SafeAreaView, StatusBar } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 
 const services = [
-  { id: '1', name: 'Coronita CarWash', location: 'Tuxtla Gutierrez', image: require('../assets/carwash1.jpeg') },
-  { id: '2', name: 'Coronita CarWash', location: 'Tuxtla Gutierrez', image: require('../assets/carwash1.jpeg') },
-  { id: '3', name: 'Coronita CarWash', location: 'Tuxtla Gutierrez', image: require('../assets/carwash1.jpeg') },
-  { id: '4', name: 'Coronita CarWash', location: 'Tuxtla Gutierrez', image: require('../assets/carwash1.jpeg') },
-  { id: '5', name: 'Coronita CarWash', location: 'Tuxtla Gutierrez', image: require('../assets/carwash1.jpeg') },
+  { id: '1', name: 'Coronita CarWash', location: 'Tuxtla Gutierrez', image: require('../assets/carwash1.jpeg'), category: 'Vehículos', hours: '09:00 - 18:00', description: 'Auto lavado y aspirado de todo tipo de autos con precios que dependen del tamaño del vehículo', gallery: [require('../assets/carwash1.jpeg'), require('../assets/carwash2.jpeg'), require('../assets/carwash3.jpeg')] },
+  { id: '2', name: 'Coronita CarWash', location: 'Tuxtla Gutierrez', image: require('../assets/carwash1.jpeg'), category: 'Vehículos', hours: '09:00 - 18:00', description: 'Auto lavado y aspirado de todo tipo de autos con precios que dependen del tamaño del vehículo', gallery: [require('../assets/carwash1.jpeg'), require('../assets/carwash2.jpeg'), require('../assets/carwash3.jpeg')] },
+  { id: '3', name: 'Coronita CarWash', location: 'Tuxtla Gutierrez', image: require('../assets/carwash1.jpeg'), category: 'Vehículos', hours: '09:00 - 18:00', description: 'Auto lavado y aspirado de todo tipo de autos con precios que dependen del tamaño del vehículo', gallery: [require('../assets/carwash1.jpeg'), require('../assets/carwash2.jpeg'), require('../assets/carwash3.jpeg')] },
+  { id: '4', name: 'Coronita CarWash', location: 'Tuxtla Gutierrez', image: require('../assets/carwash1.jpeg'), category: 'Vehículos', hours: '09:00 - 18:00', description: 'Auto lavado y aspirado de todo tipo de autos con precios que dependen del tamaño del vehículo', gallery: [require('../assets/carwash1.jpeg'), require('../assets/carwash2.jpeg'), require('../assets/carwash3.jpeg')] },
+  { id: '5', name: 'Coronita CarWash', location: 'Tuxtla Gutierrez', image: require('../assets/carwash1.jpeg'), category: 'Vehículos', hours: '09:00 - 18:00', description: 'Auto lavado y aspirado de todo tipo de autos con precios que dependen del tamaño del vehículo', gallery: [require('../assets/carwash1.jpeg'), require('../assets/carwash2.jpeg'), require('../assets/carwash3.jpeg'), require('../assets/carwash3.jpeg'), require('../assets/carwash3.jpeg')] },
 ];
 
 const HomeScreen = () => {
   const navigation = useNavigation();
+  const [query, setQuery] = useState('');
+
+  const handleSearch = () => {
+    navigation.navigate('SearchResults', { query, services });
+  };
+
+  const handleAgendar = (business) => {
+    navigation.navigate('BusinessDetails', { business });
+  };
+
   const sections = [
     { title: 'Para ti', data: [services] },
     { title: 'Servicios', data: services },
@@ -27,23 +37,29 @@ const HomeScreen = () => {
             <FontAwesome name="bars" size={24} color="black" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Home</Text>
-          <Image source={require('../assets/profile.jpg')} style={styles.profileImage} />
+          <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
+            <Image source={require('../assets/profile.jpg')} style={styles.profileImage} />
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.searchContainerWrapper}>
+          <Text style={styles.searchTitle}>¡Busca tu servicio!</Text>
+          <View style={styles.searchContainer}>
+            <TextInput
+              placeholder="Buscar"
+              style={styles.searchInput}
+              value={query}
+              onChangeText={setQuery}
+            />
+            <TouchableOpacity style={styles.searchIconWrapper} onPress={handleSearch}>
+              <FontAwesome name="search" size={24} color="white" />
+            </TouchableOpacity>
+          </View>
         </View>
 
         <SectionList
           sections={sections}
           keyExtractor={(item, index) => item.id + index}
-          ListHeaderComponent={() => (
-            <View style={styles.searchContainerWrapper}>
-              <Text style={styles.searchTitle}>¡Busca tu servicio!</Text>
-              <View style={styles.searchContainer}>
-                <TextInput placeholder="Buscar" style={styles.searchInput} />
-                <TouchableOpacity style={styles.searchIcon}>
-                  <FontAwesome name="search" size={24} color="white" />
-                </TouchableOpacity>
-              </View>
-            </View>
-          )}
           renderSectionHeader={({ section: { title } }) => (
             <Text style={styles.sectionTitle}>{title}</Text>
           )}
@@ -53,10 +69,12 @@ const HomeScreen = () => {
                 data={item}
                 horizontal
                 renderItem={({ item }) => (
-                  <View style={styles.card}>
-                    <Image source={item.image} style={styles.cardImage} />
-                    <Text style={styles.cardText}>{item.name}</Text>
-                  </View>
+                  <TouchableOpacity onPress={() => handleAgendar(item)}>
+                    <View style={styles.card}>
+                      <Image source={item.image} style={styles.cardImage} />
+                      <Text style={styles.cardText}>{item.name}</Text>
+                    </View>
+                  </TouchableOpacity>
                 )}
                 keyExtractor={(item) => item.id}
                 showsHorizontalScrollIndicator={false}
@@ -70,7 +88,7 @@ const HomeScreen = () => {
                     <Image source={require('../assets/location.png')} style={styles.locationIcon} />
                     <Text style={styles.serviceCardLocation}>{item.location}</Text>
                   </View>
-                  <TouchableOpacity style={styles.agendarButton}>
+                  <TouchableOpacity style={styles.agendarButton} onPress={() => handleAgendar(item)}>
                     <Text style={styles.agendarButtonText}>Agendar</Text>
                   </TouchableOpacity>
                 </View>
@@ -132,11 +150,11 @@ const styles = StyleSheet.create({
     paddingLeft: 10,
     backgroundColor: '#fff',
   },
-  searchIcon: {
+  searchIconWrapper: {
     width: 40,
     height: 40,
+    borderRadius: 20,
     backgroundColor: '#268AAB',
-    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: 10,
