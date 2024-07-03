@@ -1,10 +1,10 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Image, SafeAreaView } from 'react-native';
 import { DrawerContentScrollView, DrawerItem } from '@react-navigation/drawer';
 import { FontAwesome } from '@expo/vector-icons';
 
 const CustomDrawerContent = (props) => (
-  <View style={{ flex: 1 }}>
+  <SafeAreaView style={{ flex: 1 }}>
     <DrawerContentScrollView {...props} contentContainerStyle={{ flex: 1 }}>
       <View style={styles.drawerHeader}>
         <Image source={require('../assets/logo.png')} style={styles.logo} />
@@ -26,6 +26,13 @@ const CustomDrawerContent = (props) => (
         )}
         onPress={() => props.navigation.navigate('MiNegocio')}
       />
+      <DrawerItem
+        label="Políticas de Privacidad"
+        icon={({ color, size }) => (
+          <FontAwesome name="file-text" size={size} color={color} />
+        )}
+        onPress={() => props.navigation.navigate('Politicas')}
+      />
     </DrawerContentScrollView>
     <View style={styles.logoutContainer}>
       <TouchableOpacity style={styles.logoutButton} onPress={() => props.navigation.navigate('Login')}>
@@ -33,7 +40,7 @@ const CustomDrawerContent = (props) => (
         <Text style={styles.logoutButtonText}>Salir</Text>
       </TouchableOpacity>
     </View>
-  </View>
+  </SafeAreaView>
 );
 
 const styles = StyleSheet.create({
