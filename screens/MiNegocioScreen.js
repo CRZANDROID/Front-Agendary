@@ -11,6 +11,20 @@ const MiNegocioScreen = () => {
     navigation.navigate('RegisterBusiness');
   };
 
+  const handleLogin = () => {
+    const business = {
+      id: '1',
+      name: 'Coronita CarWash',
+      location: 'Av. central oriente #758',
+      image: require('../assets/carwash1.jpeg'),
+      category: 'Vehículos',
+      hours: '09:00 - 18:00',
+      description: 'Auto lavado y aspirado de todo tipo de autos con precios que dependen del tamaño del vehículo',
+      gallery: [require('../assets/carwash1.jpeg'), require('../assets/carwash2.jpeg'), require('../assets/carwash3.jpeg')]
+    };
+    navigation.navigate('BusinessPreview', { business });
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
@@ -42,7 +56,7 @@ const MiNegocioScreen = () => {
             </TouchableOpacity>
           </View>
         </View>
-        <TouchableOpacity style={styles.loginButton}>
+        <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
           <Text style={styles.loginButtonText}>Iniciar sesión</Text>
         </TouchableOpacity>
       </View>

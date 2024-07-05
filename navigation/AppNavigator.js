@@ -13,6 +13,9 @@ import ScheduleAppointmentScreen from '../screens/ScheduleAppointmentScreen';
 import CustomDrawerContent from '../components/CustomDrawerContent';
 import PrivacyPolicyScreen from '../screens/PrivacyPolicyScreen';
 import RegisterBusinessScreen from '../screens/RegisterBusinessScreen';
+import BusinessPreviewScreen from '../screens/BusinessPreviewScreen';
+import WorkAgendaScreen from '../screens/WorkAgendaScreen';
+import EditBusinessScreen from '../screens/EditBusinessScreen';
 
 const Stack = createStackNavigator();
 const Drawer = createDrawerNavigator();
@@ -29,7 +32,11 @@ const HomeStack = () => {
       <Stack.Screen name="BusinessDetails" component={BusinessDetailsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ScheduleAppointment" component={ScheduleAppointmentScreen} options={{ headerShown: false }} />
       <Stack.Screen name="RegisterBusiness" component={RegisterBusinessScreen} options={{ headerShown: false }} />
-      
+      <Stack.Screen name="BusinessPreview" component={BusinessPreviewScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="WorkAgenda" component={WorkAgendaScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="EditBusiness" component={EditBusinessScreen} options={{ headerShown: false }} />
+
+
     </Stack.Navigator>
   );
 };
