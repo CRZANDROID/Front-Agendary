@@ -1,13 +1,18 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet, FlatList, SafeAreaView, StatusBar, ScrollView, Dimensions } from 'react-native';
 import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
 import moment from 'moment';
 
 const BusinessDetailsScreen = ({ route, navigation }) => {
   const { business } = route.params;
+  const [isFavorite, setIsFavorite] = useState(false);
 
   const handleScheduleAppointment = () => {
     navigation.navigate('ScheduleAppointment', { business });
+  };
+
+  const handleFavoriteToggle = () => {
+    setIsFavorite(!isFavorite);
   };
 
   const formatBusinessHours = (hours) => {
@@ -61,9 +66,14 @@ const BusinessDetailsScreen = ({ route, navigation }) => {
           </View>
         </View>
       </ScrollView>
-      <TouchableOpacity style={styles.agendarButton} onPress={handleScheduleAppointment}>
-        <Text style={styles.agendarButtonText}>Agendar</Text>
-      </TouchableOpacity>
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity style={styles.favoriteButton} onPress={handleFavoriteToggle}>
+          <FontAwesome name="heart" size={24} color={isFavorite ? 'red' : 'gray'} />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.agendarButton} onPress={handleScheduleAppointment}>
+          <Text style={styles.agendarButtonText}>Agendar</Text>
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 };
@@ -158,12 +168,31 @@ const styles = StyleSheet.create({
     borderRadius: 10, 
     marginHorizontal: 10, 
   },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    margin: 20,
+  },
+  favoriteButton: {
+    backgroundColor: '#fff',
+    borderRadius: 30,
+    width: 50,
+    height: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 5,
+  },
   agendarButton: {
     backgroundColor: '#268AAB',
     padding: 15,
     borderRadius: 10,
     alignItems: 'center',
-    margin: 20,
+    flex: 1,
+    marginLeft: 10,
   },
   agendarButtonText: {
     color: '#fff',
@@ -173,3 +202,4 @@ const styles = StyleSheet.create({
 });
 
 export default BusinessDetailsScreen;
+

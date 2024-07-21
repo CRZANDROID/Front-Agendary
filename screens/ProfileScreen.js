@@ -1,40 +1,210 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, Modal, SafeAreaView, StatusBar } from 'react-native';
+import React, { useState, useEffect, useContext, useCallback } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, Modal, SafeAreaView, StatusBar, Alert, ActivityIndicator, Platform } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
+import { useFocusEffect } from '@react-navigation/native';
+import UserContext from '../contexts/UserContext';
+import axios from 'axios';
 
 const ProfileScreen = ({ navigation }) => {
-  const [name, setName] = useState('Josue Galdamez Cruz');
-  const [phone, setPhone] = useState('9683934023');
+  const { user, token, setUser } = useContext(UserContext);
+  const [uuid, setUuid] = useState('');
+  const [name, setName] = useState('');
+  const [lastname, setLastname] = useState('');
+  const [phone, setPhone] = useState('');
+  const [profileImage, setProfileImage] = useState(null);
+  const [newProfileImage, setNewProfileImage] = useState(null);
   const [isEditingName, setIsEditingName] = useState(false);
   const [isEditingPhone, setIsEditingPhone] = useState(false);
-  const [editedName, setEditedName] = useState(name);
-  const [editedPhone, setEditedPhone] = useState(phone);
+  const [editedName, setEditedName] = useState('');
+  const [editedPhone, setEditedPhone] = useState('');
+  const [loading, setLoading] = useState(true);
+  const defaultProfileImage = require('../assets/profile.jpg'); // Imagen por defecto
 
-  const handleSaveName = () => {
-    setName(editedName);
-    setIsEditingName(false);
+  useFocusEffect(
+    useCallback(() => {
+      if (user) {
+        initializeUserData(user);
+      }
+    }, [user])
+  );
+
+  const initializeUserData = (userData) => {
+    setUuid(userData.uuid);
+    setName(userData.name);
+    setLastname(userData.lastname);
+    setPhone(userData.phone_number);
+    setEditedName(userData.name);
+    setEditedPhone(userData.phone_number);
+    setProfileImage(userData.profile ? { uri: userData.profile + '?' + new Date().getTime() } : defaultProfileImage);
+    setLoading(false);
   };
 
-  const handleSavePhone = () => {
-    setPhone(editedPhone);
-    setIsEditingPhone(false);
+  const handleSaveName = async () => {
+    if (!uuid) {
+      Alert.alert('Error', 'ID de usuario no disponible');
+      return;
+    }
+
+    try {
+      console.log(`Updating user name for UUID: ${uuid}`); // Log de la petición
+      await axios.put(`http://54.205.215.254:8000/api/v1/update/${uuid}`, {
+        name: editedName,
+        lastname,
+        phone_number: phone,
+      }, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      console.log('User name updated successfully'); // Log de éxito
+      setIsEditingName(false);
+      Alert.alert('Éxito', 'Nombre actualizado correctamente.');
+      setUser((prevUser) => ({
+        ...prevUser,
+        name: editedName,
+      }));
+    } catch (error) {
+      if (error.response) {
+        console.log('Error updating user name:', error.response.data.message); // Log del error
+        Alert.alert('Error', error.response.data.message || 'No se pudo actualizar el nombre.');
+      } else {
+        console.log('Error connecting to server:', error.message); // Log del error
+        Alert.alert('Error', 'No se pudo conectar con el servidor.');
+      }
+    }
   };
+
+  const handleSavePhone = async () => {
+    if (!uuid) {
+      Alert.alert('Error', 'ID de usuario no disponible');
+      return;
+    }
+
+    if (editedPhone.length !== 10) {
+      Alert.alert('Error', 'El número de teléfono debe tener 10 dígitos.');
+      return;
+    }
+
+    try {
+      console.log(`Updating user phone number for UUID: ${uuid}`); // Log de la petición
+      await axios.put(`http://54.205.215.254:8000/api/v1/update/${uuid}`, {
+        name,
+        lastname,
+        phone_number: editedPhone,
+      }, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      console.log('User phone number updated successfully'); // Log de éxito
+      setIsEditingPhone(false);
+      Alert.alert('Éxito', 'Número de teléfono actualizado correctamente.');
+      setUser((prevUser) => ({
+        ...prevUser,
+        phone_number: editedPhone,
+      }));
+    } catch (error) {
+      if (error.response) {
+        console.log('Error updating user phone number:', error.response.data.message); // Log del error
+        Alert.alert('Error', error.response.data.message || 'No se pudo actualizar el número de teléfono.');
+      } else {
+        console.log('Error connecting to server:', error.message); // Log del error
+        Alert.alert('Error', 'No se pudo conectar con el servidor.');
+      }
+    }
+  };
+
+  const handleSaveProfileImage = async () => {
+    if (!newProfileImage || !uuid) {
+      console.log('No new profile image or UUID available.');
+      return;
+    }
+
+    console.log('Uploading new profile image');
+    const formData = new FormData();
+    formData.append('file', {
+      uri: Platform.OS === 'android' ? newProfileImage.uri : newProfileImage.uri.replace('file://', ''),
+      type: newProfileImage.mimeType,
+      name: newProfileImage.fileName
+    });
+
+    try {
+      const response = await axios.post(`http://54.205.215.254:8000/api/v1/add/image/${uuid}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          'Accept': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      console.log('Profile image uploaded successfully');
+      setProfileImage({ uri: newProfileImage.uri + '?' + new Date().getTime() });
+      setUser((prevUser) => ({
+        ...prevUser,
+        profile: newProfileImage.uri,
+      }));
+      setNewProfileImage(null);
+      Alert.alert('Éxito', 'Foto de perfil actualizada correctamente.');
+    } catch (error) {
+      if (error.response) {
+        console.log('Error uploading profile image:', error.response.data.message);
+        Alert.alert('Error', error.response.data.message || 'No se pudo actualizar la foto de perfil.');
+      } else {
+        console.log('Error connecting to server:', error.message);
+        Alert.alert('Error', 'No se pudo conectar con el servidor.');
+      }
+    }
+  };
+
+  const pickImage = async () => {
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permissionResult.granted) {
+      Alert.alert('Permiso requerido', 'Se requiere acceso a la galería para cambiar la foto de perfil.');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      console.log('New profile image selected:', result.assets[0]);
+      setNewProfileImage(result.assets[0]);
+      handleSaveProfileImage(); // Llamar a handleSaveProfileImage después de seleccionar la imagen
+    }
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#268AAB" />
+      </View>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <FontAwesome name="chevron-left" size={20} color="black" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Perfil</Text>
+        <View style={styles.headerLeft}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+            <FontAwesome name="chevron-left" size={20} color="black" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Perfil</Text>
+        </View>
         <Image source={require('../assets/logo.png')} style={styles.logo} />
       </View>
 
       <View style={styles.profileContainer}>
         <View style={styles.profileImageContainer}>
-          <Image source={require('../assets/profile.jpg')} style={styles.profileImage} />
-          <TouchableOpacity style={styles.editIcon}>
+          <Image source={profileImage} style={styles.profileImage} key={profileImage.uri} />
+          <TouchableOpacity style={styles.editIcon} onPress={pickImage}>
             <FontAwesome name="plus" size={24} color="white" />
           </TouchableOpacity>
         </View>
@@ -94,6 +264,7 @@ const ProfileScreen = ({ navigation }) => {
               value={editedPhone}
               onChangeText={setEditedPhone}
               keyboardType="phone-pad"
+              maxLength={10} // Restricción para solo permitir 10 dígitos
             />
             <View style={styles.modalButtons}>
               <TouchableOpacity onPress={() => setIsEditingPhone(false)}>
@@ -121,6 +292,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 20,
+    justifyContent: 'space-between',
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   backButton: {
     padding: 10,
@@ -135,7 +311,7 @@ const styles = StyleSheet.create({
     width: 90,
     height: 70,
     resizeMode: 'contain',
-    marginLeft: 'auto',
+    marginRight: -20, // Desplazar el logo más a la derecha
   },
   profileContainer: {
     alignItems: 'center',
@@ -148,7 +324,7 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    borderWidth: 2,
+    borderWidth: 4, // Grosor del borde incrementado
     borderColor: '#37A8CD',
   },
   editIcon: {
@@ -224,6 +400,23 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#268AAB',
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
 });
 
 export default ProfileScreen;
+
+
+
+
+
+
+
+
+
+
+
+

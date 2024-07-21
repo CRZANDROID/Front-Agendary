@@ -35,15 +35,13 @@ const HomeStack = () => {
       <Stack.Screen name="BusinessPreview" component={BusinessPreviewScreen} options={{ headerShown: false }} />
       <Stack.Screen name="WorkAgenda" component={WorkAgendaScreen} options={{ headerShown: false }} />
       <Stack.Screen name="EditBusiness" component={EditBusinessScreen} options={{ headerShown: false }} />
-
-
     </Stack.Navigator>
   );
 };
 
 const AppNavigator = () => {
   return (
-    <Drawer.Navigator initialRouteName='Login' drawerContent={(props) => <CustomDrawerContent {...props} />}>
+    <Drawer.Navigator initialRouteName="Login" drawerContent={(props) => <CustomDrawerContent {...props} />}>
       <Drawer.Screen name="HomeStack" component={HomeStack} options={{ headerShown: false }} />
       <Drawer.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
       <Drawer.Screen name="Register" component={RegisterScreen} options={{ headerShown: false }} />

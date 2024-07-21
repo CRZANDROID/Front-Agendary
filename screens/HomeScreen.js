@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, FlatList, SectionList, SafeAreaView, StatusBar } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import UserContext from '../contexts/UserContext';
+import axios from 'axios';
 
 const services = [
   { id: '1', name: 'Dianails', location: 'Tuxtla Gutierrez', image: require('../assets/Lavado.png'), category: 'Vehículos', hours: '09:00 - 18:00', description: 'Auto lavado y aspirado de todo tipo de autos con precios que dependen del tamaño del vehículo', gallery: [require('../assets/carwash1.jpeg'), require('../assets/carwash2.jpeg'), require('../assets/carwash3.jpeg')] },
@@ -13,7 +15,30 @@ const services = [
 
 const HomeScreen = () => {
   const navigation = useNavigation();
+  const { user, token, setUser } = useContext(UserContext);
   const [query, setQuery] = useState('');
+  const [profileImageUri, setProfileImageUri] = useState(user?.profile ? { uri: user.profile + '?' + new Date().getTime() } : require('../assets/profile.jpg'));
+
+  useEffect(() => {
+    setProfileImageUri(user?.profile ? { uri: user.profile + '?' + new Date().getTime() } : require('../assets/profile.jpg'));
+  }, [user]);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const response = await axios.get(`http://54.205.215.254:8000/api/v1/find/${encodeURIComponent(user.email)}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        setUser(response.data.data);
+      } catch (error) {
+        console.log('Error fetching user data:', error);
+      }
+    };
+
+    fetchUserData();
+  }, [token]);
 
   const handleSearch = () => {
     navigation.navigate('SearchResults', { query, services });
@@ -38,7 +63,7 @@ const HomeScreen = () => {
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Home</Text>
           <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
-            <Image source={require('../assets/profile.jpg')} style={styles.profileImage} />
+            <Image source={profileImageUri} style={styles.profileImage} />
           </TouchableOpacity>
         </View>
 
@@ -186,19 +211,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     borderRadius: 10,
     backgroundColor: '#fff',
-    marginBottom: 20, 
-    padding: 10, 
+    marginBottom: 20,
+    padding: 10,
     overflow: 'hidden',
-    elevation: 3, 
-    shadowColor: '#000', 
-    shadowOffset: { width: 0, height: 2 }, 
-    shadowOpacity: 0.2, 
-    shadowRadius: 2, 
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
   },
   serviceCardImage: {
     width: 100,
     height: 100,
-    borderRadius: 10, 
+    borderRadius: 10,
   },
   serviceCardInfo: {
     flex: 1,
@@ -237,3 +262,6 @@ const styles = StyleSheet.create({
 });
 
 export default HomeScreen;
+
+
+
