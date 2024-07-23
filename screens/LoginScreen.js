@@ -31,12 +31,23 @@ const LoginScreen = ({ navigation }) => {
       });
 
       const result = response.data;
-      console.log('Login response:', result);  // Log the response to see the JWT and other data
+      console.log('Login response:', result);  
 
       if (response.status === 200 && result.data && result.data.token) {
         setErrorMessage('');
         setToken(result.data.token);
-        setUser({ email: result.data.email });  // Assuming we only need the email for the user context
+
+        
+        const userResponse = await axios.get(`http://54.205.215.254:8000/api/v1/find/${email}`, {
+          headers: {
+            Authorization: `Bearer ${result.data.token}`,
+          },
+        });
+
+        const userData = userResponse.data.data;
+        console.log('User data:', userData);  
+
+        setUser(userData);
         navigation.reset({
           index: 0,
           routes: [{ name: 'HomeStack' }],
@@ -168,6 +179,8 @@ const styles = StyleSheet.create({
 });
 
 export default LoginScreen;
+
+
 
 
 

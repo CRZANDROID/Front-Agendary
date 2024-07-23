@@ -1,27 +1,39 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, StatusBar, FlatList, Image, Platform } from 'react-native';
+import React, { useState, useContext, useEffect } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, StatusBar, FlatList, Image, Platform, Alert } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import moment from 'moment';
+import axios from 'axios';
+import UserContext from '../contexts/UserContext';
 
-const appointmentsData = [
-  { id: '1', name: 'Josue Galdamez Cruz', time: '10:00 am - 11:00 am', note: 'No aspiren la cajuela ni agreguen brillo al tablero', date: '2023-07-05' },
-  { id: '2', name: 'Maria Hernandez', time: '11:00 am - 12:00 pm', note: 'Limpieza profunda del interior', date: '2023-07-05' },
-  { id: '3', name: 'Carlos Ramirez', time: '1:00 pm - 2:00 pm', note: 'Solo lavado exterior', date: '2023-07-06' },
-  { id: '4', name: 'Laura Martinez', time: '2:00 pm - 3:00 pm', note: 'Limpieza y encerado', date: '2023-07-06' },
-  { id: '5', name: 'Pedro Lopez', time: '3:00 pm - 4:00 pm', note: 'Lavado y aspirado completo', date: '2023-07-07' },
-  { id: '6', name: 'Ana Garcia', time: '9:00 am - 10:00 am', note: 'Limpieza rápida', date: '2023-07-07' },
-  { id: '7', name: 'Luis Fernandez', time: '4:00 pm - 5:00 pm', note: 'Encerado y pulido', date: '2023-07-07' },
-  { id: '8', name: 'Miguel Sanchez', time: '5:00 pm - 6:00 pm', note: 'Lavado de motor', date: '2023-07-07' },
-  { id: '9', name: 'Paula Torres', time: '6:00 pm - 7:00 pm', note: 'Limpieza completa', date: '2023-07-08' },
-  { id: '10', name: 'Juan Perez', time: '7:00 pm - 8:00 pm', note: 'Aspirado y lavado exterior', date: '2023-07-08' },
-];
-
-const WorkAgendaScreen = ({ navigation }) => {
+const WorkAgendaScreen = ({ route, navigation }) => {
+  const { token } = useContext(UserContext);
+  const { establishmentId } = route.params;
   const [expandedAppointment, setExpandedAppointment] = useState(null);
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [filteredAppointments, setFilteredAppointments] = useState(appointmentsData);
+  const [appointmentsData, setAppointmentsData] = useState([]);
+  const [filteredAppointments, setFilteredAppointments] = useState([]);
+
+  useEffect(() => {
+    const fetchAppointments = async () => {
+      try {
+        const response = await axios.get(`http://75.101.248.20:8001/api/v1/establishment/${establishmentId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        setAppointmentsData(response.data.data);
+        setFilteredAppointments(response.data.data);
+      } catch (error) {
+        console.error('Error fetching appointments:', error);
+        Alert.alert('Error', 'No se pudieron obtener las citas del establecimiento.');
+      }
+    };
+
+    fetchAppointments();
+  }, [establishmentId, token]);
 
   const toggleExpand = (id) => {
     setExpandedAppointment(expandedAppointment === id ? null : id);
@@ -29,6 +41,7 @@ const WorkAgendaScreen = ({ navigation }) => {
 
   const handleDelete = (id) => {
     setFilteredAppointments(filteredAppointments.filter(item => item.id !== id));
+    setAppointmentsData(appointmentsData.filter(item => item.id !== id));
   };
 
   const handleDateChange = (event, date) => {
@@ -55,9 +68,10 @@ const WorkAgendaScreen = ({ navigation }) => {
       </View>
       <View style={styles.cardContent}>
         <View style={styles.cardText}>
-          <Text style={styles.appointmentName}>{item.name}</Text>
-          <Text style={styles.appointmentTime}>{item.time}</Text>
-          {expandedAppointment === item.id && <Text style={styles.appointmentNote}>Nota: {item.note}</Text>}
+          <Text style={styles.appointmentName}>{item.service}</Text>
+          <Text style={styles.appointmentTime}>{moment(item.hour, 'HH:mm:ss').format('hh:mm A')}</Text>
+          <Text style={styles.appointmentDate}>{moment(item.date).format('DD/MM/YYYY')}</Text>
+          {expandedAppointment === item.id && <Text style={styles.appointmentNote}>Nota: {item.detail}</Text>}
           {expandedAppointment === item.id && (
             <TouchableOpacity onPress={() => handleDelete(item.id)} style={styles.deleteButton}>
               <FontAwesome name="trash" size={20} color="white" />
@@ -99,7 +113,7 @@ const WorkAgendaScreen = ({ navigation }) => {
         <FlatList
           data={filteredAppointments}
           renderItem={renderItem}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) => item.id.toString()}
           contentContainerStyle={styles.flatListContent}
         />
       </View>
@@ -198,6 +212,11 @@ const styles = StyleSheet.create({
     color: 'white',
     marginBottom: 5,
   },
+  appointmentDate: {
+    fontSize: 14,
+    color: 'white',
+    marginBottom: 5,
+  },
   appointmentNote: {
     fontSize: 14,
     color: 'white',
@@ -214,3 +233,9 @@ const styles = StyleSheet.create({
 });
 
 export default WorkAgendaScreen;
+
+
+
+
+
+

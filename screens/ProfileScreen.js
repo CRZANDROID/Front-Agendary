@@ -19,7 +19,7 @@ const ProfileScreen = ({ navigation }) => {
   const [editedName, setEditedName] = useState('');
   const [editedPhone, setEditedPhone] = useState('');
   const [loading, setLoading] = useState(true);
-  const defaultProfileImage = require('../assets/profile.jpg'); // Imagen por defecto
+  const defaultProfileImage = require('../assets/profile.jpg'); 
 
   useFocusEffect(
     useCallback(() => {
@@ -47,7 +47,7 @@ const ProfileScreen = ({ navigation }) => {
     }
 
     try {
-      console.log(`Updating user name for UUID: ${uuid}`); // Log de la petición
+      console.log(`Updating user name for UUID: ${uuid}`); 
       await axios.put(`http://54.205.215.254:8000/api/v1/update/${uuid}`, {
         name: editedName,
         lastname,
@@ -58,7 +58,7 @@ const ProfileScreen = ({ navigation }) => {
         },
       });
 
-      console.log('User name updated successfully'); // Log de éxito
+      console.log('User name updated successfully'); 
       setIsEditingName(false);
       Alert.alert('Éxito', 'Nombre actualizado correctamente.');
       setUser((prevUser) => ({
@@ -67,10 +67,10 @@ const ProfileScreen = ({ navigation }) => {
       }));
     } catch (error) {
       if (error.response) {
-        console.log('Error updating user name:', error.response.data.message); // Log del error
+        console.log('Error updating user name:', error.response.data.message);
         Alert.alert('Error', error.response.data.message || 'No se pudo actualizar el nombre.');
       } else {
-        console.log('Error connecting to server:', error.message); // Log del error
+        console.log('Error connecting to server:', error.message); 
         Alert.alert('Error', 'No se pudo conectar con el servidor.');
       }
     }
@@ -88,7 +88,7 @@ const ProfileScreen = ({ navigation }) => {
     }
 
     try {
-      console.log(`Updating user phone number for UUID: ${uuid}`); // Log de la petición
+      console.log(`Updating user phone number for UUID: ${uuid}`); 
       await axios.put(`http://54.205.215.254:8000/api/v1/update/${uuid}`, {
         name,
         lastname,
@@ -99,7 +99,7 @@ const ProfileScreen = ({ navigation }) => {
         },
       });
 
-      console.log('User phone number updated successfully'); // Log de éxito
+      console.log('User phone number updated successfully'); 
       setIsEditingPhone(false);
       Alert.alert('Éxito', 'Número de teléfono actualizado correctamente.');
       setUser((prevUser) => ({
@@ -108,10 +108,10 @@ const ProfileScreen = ({ navigation }) => {
       }));
     } catch (error) {
       if (error.response) {
-        console.log('Error updating user phone number:', error.response.data.message); // Log del error
+        console.log('Error updating user phone number:', error.response.data.message); 
         Alert.alert('Error', error.response.data.message || 'No se pudo actualizar el número de teléfono.');
       } else {
-        console.log('Error connecting to server:', error.message); // Log del error
+        console.log('Error connecting to server:', error.message); 
         Alert.alert('Error', 'No se pudo conectar con el servidor.');
       }
     }
@@ -176,7 +176,7 @@ const ProfileScreen = ({ navigation }) => {
     if (!result.canceled) {
       console.log('New profile image selected:', result.assets[0]);
       setNewProfileImage(result.assets[0]);
-      handleSaveProfileImage(); // Llamar a handleSaveProfileImage después de seleccionar la imagen
+      handleSaveProfileImage(); 
     }
   };
 
@@ -264,7 +264,7 @@ const ProfileScreen = ({ navigation }) => {
               value={editedPhone}
               onChangeText={setEditedPhone}
               keyboardType="phone-pad"
-              maxLength={10} // Restricción para solo permitir 10 dígitos
+              maxLength={10} 
             />
             <View style={styles.modalButtons}>
               <TouchableOpacity onPress={() => setIsEditingPhone(false)}>
@@ -311,7 +311,7 @@ const styles = StyleSheet.create({
     width: 90,
     height: 70,
     resizeMode: 'contain',
-    marginRight: -20, // Desplazar el logo más a la derecha
+    marginRight: -20, 
   },
   profileContainer: {
     alignItems: 'center',
@@ -324,7 +324,7 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    borderWidth: 4, // Grosor del borde incrementado
+    borderWidth: 4, 
     borderColor: '#37A8CD',
   },
   editIcon: {
@@ -408,15 +408,3 @@ const styles = StyleSheet.create({
 });
 
 export default ProfileScreen;
-
-
-
-
-
-
-
-
-
-
-
-

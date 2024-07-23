@@ -5,19 +5,14 @@ import { useNavigation } from '@react-navigation/native';
 import UserContext from '../contexts/UserContext';
 import axios from 'axios';
 
-const services = [
-  { id: '1', name: 'Dianails', location: 'Tuxtla Gutierrez', image: require('../assets/Lavado.png'), category: 'Vehículos', hours: '09:00 - 18:00', description: 'Auto lavado y aspirado de todo tipo de autos con precios que dependen del tamaño del vehículo', gallery: [require('../assets/carwash1.jpeg'), require('../assets/carwash2.jpeg'), require('../assets/carwash3.jpeg')] },
-  { id: '2', name: 'Coronita CarWash', location: 'Tuxtla Gutierrez', image: require('../assets/Lavado.png'), category: 'Vehículos', hours: '09:00 - 18:00', description: 'Auto lavado y aspirado de todo tipo de autos con precios que dependen del tamaño del vehículo', gallery: [require('../assets/carwash1.jpeg'), require('../assets/carwash2.jpeg'), require('../assets/carwash3.jpeg')] },
-  { id: '3', name: 'Coronita CarWash', location: 'Tuxtla Gutierrez', image: require('../assets/Lavado.png'), category: 'Vehículos', hours: '09:00 - 18:00', description: 'Auto lavado y aspirado de todo tipo de autos con precios que dependen del tamaño del vehículo', gallery: [require('../assets/carwash1.jpeg'), require('../assets/carwash2.jpeg'), require('../assets/carwash3.jpeg')] },
-  { id: '4', name: 'Coronita CarWash', location: 'Tuxtla Gutierrez', image: require('../assets/Lavado.png'), category: 'Vehículos', hours: '09:00 - 18:00', description: 'Auto lavado y aspirado de todo tipo de autos con precios que dependen del tamaño del vehículo', gallery: [require('../assets/carwash1.jpeg'), require('../assets/carwash2.jpeg'), require('../assets/carwash3.jpeg')] },
-  { id: '5', name: 'Coronita CarWash', location: 'Tuxtla Gutierrez', image: require('../assets/Lavado.png'), category: 'Vehículos', hours: '09:00 - 18:00', description: 'Auto lavado y aspirado de todo tipo de autos con precios que dependen del tamaño del vehículo', gallery: [require('../assets/carwash1.jpeg'), require('../assets/carwash2.jpeg'), require('../assets/carwash3.jpeg'), require('../assets/carwash3.jpeg'), require('../assets/carwash3.jpeg')] },
-];
-
 const HomeScreen = () => {
   const navigation = useNavigation();
   const { user, token, setUser } = useContext(UserContext);
   const [query, setQuery] = useState('');
   const [profileImageUri, setProfileImageUri] = useState(user?.profile ? { uri: user.profile + '?' + new Date().getTime() } : require('../assets/profile.jpg'));
+  const [establishments, setEstablishments] = useState([]);
+  const [recentEstablishments, setRecentEstablishments] = useState([]);
+  const [allEstablishments, setAllEstablishments] = useState([]);
 
   useEffect(() => {
     setProfileImageUri(user?.profile ? { uri: user.profile + '?' + new Date().getTime() } : require('../assets/profile.jpg'));
@@ -40,8 +35,28 @@ const HomeScreen = () => {
     fetchUserData();
   }, [token]);
 
+  useEffect(() => {
+    const fetchEstablishments = async () => {
+      try {
+        const response = await axios.get('http://75.101.248.20:8000/api/v1/establishment', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        setEstablishments(response.data.data);
+
+        setRecentEstablishments(response.data.data.slice(0, 5)); 
+        setAllEstablishments(response.data.data.sort(() => 0.5 - Math.random())); 
+      } catch (error) {
+        console.log('Error fetching establishments:', error);
+      }
+    };
+
+    fetchEstablishments();
+  }, [token]);
+
   const handleSearch = () => {
-    navigation.navigate('SearchResults', { query, services });
+    navigation.navigate('SearchResults', { query, establishments: allEstablishments });
   };
 
   const handleAgendar = (business) => {
@@ -49,8 +64,8 @@ const HomeScreen = () => {
   };
 
   const sections = [
-    { title: 'Para ti', data: [services] },
-    { title: 'Servicios', data: services },
+    { title: 'Más recientes', data: [recentEstablishments] },
+    { title: 'Servicios', data: allEstablishments },
   ];
 
   return (
@@ -84,34 +99,34 @@ const HomeScreen = () => {
 
         <SectionList
           sections={sections}
-          keyExtractor={(item, index) => item.id + index}
+          keyExtractor={(item, index) => item.uuid + index}
           renderSectionHeader={({ section: { title } }) => (
             <Text style={styles.sectionTitle}>{title}</Text>
           )}
           renderItem={({ item, section }) =>
-            section.title === 'Para ti' ? (
+            section.title === 'Más recientes' ? (
               <FlatList
                 data={item}
                 horizontal
                 renderItem={({ item }) => (
                   <TouchableOpacity onPress={() => handleAgendar(item)}>
                     <View style={styles.card}>
-                      <Image source={item.image} style={styles.cardImage} />
+                      <Image source={item.portrait ? { uri: item.portrait } : require('../assets/placeholder.png')} style={styles.cardImage} />
                       <Text style={styles.cardText}>{item.name}</Text>
                     </View>
                   </TouchableOpacity>
                 )}
-                keyExtractor={(item) => item.id}
+                keyExtractor={(item) => item.uuid}
                 showsHorizontalScrollIndicator={false}
               />
             ) : (
               <View style={styles.serviceCard}>
-                <Image source={item.image} style={styles.serviceCardImage} />
+                <Image source={item.portrait ? { uri: item.portrait } : require('../assets/placeholder.png')} style={styles.serviceCardImage} />
                 <View style={styles.serviceCardInfo}>
                   <Text style={styles.serviceCardName}>{item.name}</Text>
                   <View style={styles.locationContainer}>
                     <Image source={require('../assets/location.png')} style={styles.locationIcon} />
-                    <Text style={styles.serviceCardLocation}>{item.location}</Text>
+                    <Text style={styles.serviceCardLocation}>{item.address}</Text>
                   </View>
                   <TouchableOpacity style={styles.agendarButton} onPress={() => handleAgendar(item)}>
                     <Text style={styles.agendarButtonText}>Agendar</Text>
@@ -134,7 +149,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
-    paddingTop: StatusBar.currentHeight, 
+    paddingTop: StatusBar.currentHeight,
   },
   header: {
     flexDirection: 'row',
@@ -262,6 +277,10 @@ const styles = StyleSheet.create({
 });
 
 export default HomeScreen;
+
+
+
+
 
 
 

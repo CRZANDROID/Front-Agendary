@@ -22,7 +22,7 @@ const RegisterScreen = ({ navigation }) => {
   const handleRegister = async () => {
     let isValid = true;
 
-    // Validaciones
+    
     if (!name) {
       setNameError('El nombre es obligatorio.');
       isValid = false;
@@ -131,7 +131,7 @@ const RegisterScreen = ({ navigation }) => {
             placeholder="Número de teléfono"
             style={styles.input}
             value={phoneNumber}
-            onChangeText={(text) => setPhoneNumber(text.replace(/[^0-9]/g, ''))} // Solo permite números
+            onChangeText={(text) => setPhoneNumber(text.replace(/[^0-9]/g, ''))} 
             keyboardType="numeric"
             maxLength={10}
           />

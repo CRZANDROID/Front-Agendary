@@ -1,20 +1,26 @@
-// SearchResultsScreen.js
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, FlatList, SafeAreaView, StatusBar } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 
 const SearchResultsScreen = ({ navigation, route }) => {
-  const { services } = route.params;
-  const [query, setQuery] = useState(route.params.query);
+  const { query, establishments } = route.params;
+  const [filteredEstablishments, setFilteredEstablishments] = useState([]);
+  const [searchQuery, setSearchQuery] = useState(query);
 
-  const filteredServices = services.filter(service => 
-    service.name.toLowerCase().includes(query.toLowerCase()) ||
-    service.location.toLowerCase().includes(query.toLowerCase())
-  );
+  useEffect(() => {
+    const results = establishments.filter(establishment =>
+      establishment.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      establishment.category.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    setFilteredEstablishments(results);
+  }, [searchQuery]);
 
   const handleSearch = () => {
-    
+    const results = establishments.filter(establishment =>
+      establishment.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      establishment.category.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    setFilteredEstablishments(results);
   };
 
   const handleAgendar = (business) => {
@@ -30,8 +36,8 @@ const SearchResultsScreen = ({ navigation, route }) => {
         </TouchableOpacity>
         <TextInput
           style={styles.searchInput}
-          value={query}
-          onChangeText={setQuery}
+          value={searchQuery}
+          onChangeText={setSearchQuery}
           placeholder="Buscar"
         />
         <TouchableOpacity style={styles.searchIconWrapper} onPress={handleSearch}>
@@ -39,22 +45,24 @@ const SearchResultsScreen = ({ navigation, route }) => {
         </TouchableOpacity>
       </View>
       <FlatList
-        data={filteredServices}
-        keyExtractor={item => item.id}
+        data={filteredEstablishments}
+        keyExtractor={item => item.uuid}
         renderItem={({ item }) => (
-          <View style={styles.serviceCard}>
-            <Image source={item.image} style={styles.serviceCardImage} />
-            <View style={styles.serviceCardInfo}>
-              <Text style={styles.serviceCardName}>{item.name}</Text>
-              <View style={styles.locationContainer}>
-                <Image source={require('../assets/location.png')} style={styles.locationIcon} />
-                <Text style={styles.serviceCardLocation}>{item.location}</Text>
+          <TouchableOpacity onPress={() => handleAgendar(item)}>
+            <View style={styles.serviceCard}>
+              <Image source={item.portrait ? { uri: item.portrait } : require('../assets/placeholder.png')} style={styles.serviceCardImage} />
+              <View style={styles.serviceCardInfo}>
+                <Text style={styles.serviceCardName}>{item.name}</Text>
+                <View style={styles.locationContainer}>
+                  <Image source={require('../assets/location.png')} style={styles.locationIcon} />
+                  <Text style={styles.serviceCardLocation}>{item.address}</Text>
+                </View>
+                <TouchableOpacity style={styles.agendarButton} onPress={() => handleAgendar(item)}>
+                  <Text style={styles.agendarButtonText}>Agendar</Text>
+                </TouchableOpacity>
               </View>
-              <TouchableOpacity style={styles.agendarButton} onPress={() => handleAgendar(item)}>
-                <Text style={styles.agendarButtonText}>Agendar</Text>
-              </TouchableOpacity>
             </View>
-          </View>
+          </TouchableOpacity>
         )}
       />
     </SafeAreaView>
@@ -147,3 +155,5 @@ const styles = StyleSheet.create({
 });
 
 export default SearchResultsScreen;
+
+

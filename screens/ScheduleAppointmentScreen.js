@@ -1,51 +1,80 @@
-import React, { useState } from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet, SafeAreaView, StatusBar, TextInput, ScrollView } from 'react-native';
+import React, { useState, useContext, useEffect } from 'react';
+import { View, Text, Image, TouchableOpacity, StyleSheet, SafeAreaView, StatusBar, TextInput, ScrollView, Alert } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import moment from 'moment';
+import UserContext from '../contexts/UserContext';
+import axios from 'axios';
 
 const ScheduleAppointmentScreen = ({ route, navigation }) => {
   const { business } = route.params;
+  const { user, token } = useContext(UserContext);
   const [selectedService, setSelectedService] = useState('');
   const [selectedDate, setSelectedDate] = useState(null);
-  const [selectedTime, setSelectedTime] = useState('');
+  const [selectedTime, setSelectedTime] = useState(null);
   const [note, setNote] = useState('');
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
-  const [dateError, setDateError] = useState(false);
-  const [timeError, setTimeError] = useState(false);
 
   const handleDateChange = (event, date) => {
     setShowDatePicker(false);
-    if (date) {
+    if (event.type === "set" && date) {
       const selectedMoment = moment(date);
-      const today = moment().startOf('day');
-      const threeDaysLater = moment().add(3, 'days').endOf('day');
-      if (selectedMoment.isSameOrAfter(today) && selectedMoment.isSameOrBefore(threeDaysLater)) {
+      const today = moment();
+      const inTwoDays = moment().add(2, 'days');
+
+      if (selectedMoment.isBetween(today.subtract(1, 'days'), inTwoDays, 'days', '[]')) {
         setSelectedDate(date);
-        setDateError(false);
       } else {
-        setSelectedDate(null);
-        setDateError(true);
+        Alert.alert('Error', 'Solo puedes seleccionar la fecha actual o los próximos dos días.');
       }
     }
   };
 
   const handleTimeChange = (event, time) => {
     setShowTimePicker(false);
-    if (time) {
-      const selectedMoment = moment(time, 'HH:mm');
-      const [startHour, endHour] = business.hours.split(' - ');
-      const businessStartHour = moment(startHour, 'HH:mm');
-      const businessEndHour = moment(endHour, 'HH:mm');
-      if (selectedMoment.isBetween(businessStartHour, businessEndHour, null, '[)')) {
-        setSelectedTime(selectedMoment.format('HH:mm'));
-        setTimeError(false);
+    if (event.type === "set" && time) {
+      const selectedMoment = moment(time);
+      const selectedTimeFormatted = selectedMoment.format('HH:mm:ss');
+      setSelectedTime(selectedTimeFormatted);
+    }
+  };
+
+  const handleAppointment = async () => {
+    if (!selectedService || !selectedDate || !selectedTime || !note) {
+      Alert.alert('Error', 'Todos los campos son obligatorios.');
+      return;
+    }
+
+    const appointmentData = {
+      user_id: user.uuid,
+      establishment_id: business.uuid,
+      service: selectedService,
+      date: moment(selectedDate).format('YYYY-MM-DD'),
+      hour: selectedTime,
+      detail: note,
+      status: 'active',
+    };
+
+    console.log('Datos de la cita a enviar:', appointmentData); 
+
+    try {
+      const response = await axios.post('http://75.101.248.20:8001/api/v1/create/', appointmentData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.status === 200) {
+        Alert.alert('Éxito', 'Cita programada correctamente.');
+        navigation.goBack();
       } else {
-        setSelectedTime('');
-        setTimeError(true);
+        Alert.alert('Error', 'No se pudo programar la cita.');
       }
+    } catch (error) {
+      console.error('Error scheduling appointment:', error);
+      Alert.alert('Error', 'No se pudo programar la cita.');
     }
   };
 
@@ -58,7 +87,7 @@ const ScheduleAppointmentScreen = ({ route, navigation }) => {
         </TouchableOpacity>
       </View>
       <ScrollView contentContainerStyle={styles.scrollViewContainer}>
-        <Image source={business.image} style={styles.businessImage} />
+        <Image source={business.portrait ? { uri: business.portrait } : require('../assets/placeholder.png')} style={styles.businessImage} />
         <View style={styles.infoContainer}>
           <Text style={styles.businessName}>{business.name}</Text>
           <View style={styles.pickerContainer}>
@@ -68,8 +97,9 @@ const ScheduleAppointmentScreen = ({ route, navigation }) => {
               style={styles.picker}
             >
               <Picker.Item label="Selecciona tu servicio" value="" />
-              <Picker.Item label="Lavado Básico" value="Lavado Básico" />
-              <Picker.Item label="Lavado Completo" value="Lavado Completo" />
+              {business.service.map((service, index) => (
+                <Picker.Item key={index} label={service.name} value={service.name} />
+              ))}
             </Picker>
           </View>
           <View style={styles.pickerContainer}>
@@ -82,11 +112,10 @@ const ScheduleAppointmentScreen = ({ route, navigation }) => {
                 mode="date"
                 display="default"
                 minimumDate={new Date()}
-                maximumDate={moment().add(3, 'days').toDate()}
+                maximumDate={moment().add(2, 'days').toDate()}
                 onChange={handleDateChange}
               />
             )}
-            {dateError && <Text style={styles.errorText}>Fecha no disponible</Text>}
           </View>
           <View style={styles.pickerContainer}>
             <TouchableOpacity onPress={() => setShowTimePicker(true)} style={styles.datePicker}>
@@ -94,14 +123,13 @@ const ScheduleAppointmentScreen = ({ route, navigation }) => {
             </TouchableOpacity>
             {showTimePicker && (
               <DateTimePicker
-                value={selectedTime ? new Date(`1970-01-01T${selectedTime}:00`) : new Date()}
+                value={new Date()} 
                 mode="time"
                 display="default"
                 onChange={handleTimeChange}
               />
             )}
           </View>
-          {timeError && <Text style={styles.errorText}>Horario no disponible</Text>}
           <View style={styles.noteContainer}>
             <Text>Nota:</Text>
             <TextInput
@@ -112,7 +140,7 @@ const ScheduleAppointmentScreen = ({ route, navigation }) => {
               onChangeText={setNote}
             />
           </View>
-          <TouchableOpacity style={styles.agendarButton}>
+          <TouchableOpacity style={styles.agendarButton} onPress={handleAppointment}>
             <Text style={styles.agendarButtonText}>Agendar</Text>
           </TouchableOpacity>
         </View>
@@ -173,10 +201,6 @@ const styles = StyleSheet.create({
     height: 50,
     justifyContent: 'center',
   },
-  errorText: {
-    color: 'red',
-    marginTop: 5,
-  },
   noteContainer: {
     marginVertical: 10,
   },
@@ -202,3 +226,25 @@ const styles = StyleSheet.create({
 });
 
 export default ScheduleAppointmentScreen;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

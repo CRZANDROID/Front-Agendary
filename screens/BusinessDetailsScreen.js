@@ -1,11 +1,32 @@
-import React, { useState } from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet, FlatList, SafeAreaView, StatusBar, ScrollView, Dimensions } from 'react-native';
+import React, { useState, useContext, useEffect } from 'react';
+import { View, Text, Image, TouchableOpacity, StyleSheet, FlatList, SafeAreaView, StatusBar, ScrollView } from 'react-native';
 import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
+import axios from 'axios';
 import moment from 'moment';
+import UserContext from '../contexts/UserContext';
 
 const BusinessDetailsScreen = ({ route, navigation }) => {
   const { business } = route.params;
+  const { token } = useContext(UserContext);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [gallery, setGallery] = useState([]);
+
+  useEffect(() => {
+    const fetchGallery = async () => {
+      try {
+        const response = await axios.get(`http://75.101.248.20:8000/api/v1/establishment/gallery/${business.uuid}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        setGallery(response.data.data);
+      } catch (error) {
+        console.error('Error fetching gallery:', error);
+      }
+    };
+
+    fetchGallery();
+  }, [business.uuid, token]);
 
   const handleScheduleAppointment = () => {
     navigation.navigate('ScheduleAppointment', { business });
@@ -15,11 +36,10 @@ const BusinessDetailsScreen = ({ route, navigation }) => {
     setIsFavorite(!isFavorite);
   };
 
-  const formatBusinessHours = (hours) => {
-    const [startHour, endHour] = hours.split(' - ');
-    const formattedStartHour = moment(startHour, 'HH:mm').format('hh:mm A');
-    const formattedEndHour = moment(endHour, 'HH:mm').format('hh:mm A');
-    return `${formattedStartHour} - ${formattedEndHour}`;
+  const formatBusinessHours = (opening, closing) => {
+    const formattedOpening = moment(opening, 'HH:mm:ss').format('hh:mm A');
+    const formattedClosing = moment(closing, 'HH:mm:ss').format('hh:mm A');
+    return `${formattedOpening} - ${formattedClosing}`;
   };
 
   return (
@@ -31,7 +51,7 @@ const BusinessDetailsScreen = ({ route, navigation }) => {
         </TouchableOpacity>
       </View>
       <ScrollView contentContainerStyle={styles.scrollViewContainer}>
-        <Image source={business.image} style={styles.businessImage} />
+        <Image source={business.portrait ? { uri: business.portrait } : require('../assets/placeholder.png')} style={styles.businessImage} />
         <View style={styles.infoContainer}>
           <Text style={styles.businessName}>{business.name}</Text>
           <View style={styles.categoryContainer}>
@@ -40,30 +60,34 @@ const BusinessDetailsScreen = ({ route, navigation }) => {
           </View>
           <View style={styles.locationContainer}>
             <FontAwesome name="map-marker" size={24} color="#FFA500" />
-            <Text style={styles.businessLocation}>{business.location}</Text>
+            <Text style={styles.businessLocation}>{business.address}</Text>
           </View>
           <View style={styles.hoursContainer}>
             <FontAwesome name="clock-o" size={24} color="gray" />
-            <Text style={styles.businessHours}>{formatBusinessHours(business.hours)}</Text>
+            <Text style={styles.businessHours}>{formatBusinessHours(business.opening_hours, business.closing_hours)}</Text>
           </View>
           <Text style={styles.sectionTitle}>Descripción</Text>
           <Text style={styles.businessDescription}>{business.description}</Text>
-          <Text style={styles.sectionTitle}>Galería</Text>
-          <View style={styles.galleryWrapper}>
-            <FlatList
-              data={business.gallery}
-              keyExtractor={(item, index) => index.toString()}
-              renderItem={({ item }) => (
-                <Image source={item} style={styles.galleryImage} />
-              )}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              pagingEnabled
-              snapToAlignment="center"
-              decelerationRate="fast"
-              contentContainerStyle={styles.galleryContainer}
-            />
-          </View>
+          {gallery.length > 0 && (
+            <>
+              <Text style={styles.sectionTitle}>Galería</Text>
+              <View style={styles.galleryWrapper}>
+                <FlatList
+                  data={gallery}
+                  keyExtractor={(item, index) => index.toString()}
+                  renderItem={({ item }) => (
+                    <Image source={{ uri: item.url }} style={styles.galleryImage} />
+                  )}
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  pagingEnabled
+                  snapToAlignment="center"
+                  decelerationRate="fast"
+                  contentContainerStyle={styles.galleryContainer}
+                />
+              </View>
+            </>
+          )}
         </View>
       </ScrollView>
       <View style={styles.buttonContainer}>
@@ -162,11 +186,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   galleryImage: {
-    width: 150, 
+    width: 150,
     height: 150,
     resizeMode: 'cover',
-    borderRadius: 10, 
-    marginHorizontal: 10, 
+    borderRadius: 10,
+    marginHorizontal: 10,
   },
   buttonContainer: {
     flexDirection: 'row',
@@ -202,4 +226,5 @@ const styles = StyleSheet.create({
 });
 
 export default BusinessDetailsScreen;
+
 
