@@ -9,7 +9,7 @@ import axios from 'axios';
 
 const ScheduleAppointmentScreen = ({ route, navigation }) => {
   const { business } = route.params;
-  const { user, token } = useContext(UserContext);
+  const { user } = useContext(UserContext); // Eliminamos token del contexto
   const [selectedService, setSelectedService] = useState('');
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedTime, setSelectedTime] = useState(null);
@@ -57,14 +57,10 @@ const ScheduleAppointmentScreen = ({ route, navigation }) => {
       status: 'active',
     };
 
-    console.log('Datos de la cita a enviar:', appointmentData); 
+    console.log('Datos de la cita a enviar:', appointmentData);
 
     try {
-      const response = await axios.post('http://75.101.248.20:8001/api/v1/create/', appointmentData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await axios.post('http://3.80.92.37:8001/api/v1/create/', appointmentData);
 
       if (response.status === 200) {
         Alert.alert('Éxito', 'Cita programada correctamente.');
@@ -73,8 +69,16 @@ const ScheduleAppointmentScreen = ({ route, navigation }) => {
         Alert.alert('Error', 'No se pudo programar la cita.');
       }
     } catch (error) {
-      console.error('Error scheduling appointment:', error);
-      Alert.alert('Error', 'No se pudo programar la cita.');
+      if (error.response) {
+        console.error('Response error:', error.response.data);
+        Alert.alert('Error', `No se pudo programar la cita. Error: ${error.response.data.message || error.response.status}`);
+      } else if (error.request) {
+        console.error('Request error:', error.request);
+        Alert.alert('Error', 'No se recibió respuesta del servidor. Por favor, inténtelo de nuevo.');
+      } else {
+        console.error('Setup error:', error.message);
+        Alert.alert('Error', 'Hubo un problema al configurar la solicitud. Por favor, inténtelo de nuevo.');
+      }
     }
   };
 
@@ -226,6 +230,9 @@ const styles = StyleSheet.create({
 });
 
 export default ScheduleAppointmentScreen;
+
+
+
 
 
 

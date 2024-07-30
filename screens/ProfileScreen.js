@@ -48,7 +48,7 @@ const ProfileScreen = ({ navigation }) => {
 
     try {
       console.log(`Updating user name for UUID: ${uuid}`); 
-      await axios.put(`http://54.205.215.254:8000/api/v1/update/${uuid}`, {
+      await axios.put(`http://3.80.92.37:8000/api/v1/update/${uuid}`, {
         name: editedName,
         lastname,
         phone_number: phone,
@@ -89,7 +89,7 @@ const ProfileScreen = ({ navigation }) => {
 
     try {
       console.log(`Updating user phone number for UUID: ${uuid}`); 
-      await axios.put(`http://54.205.215.254:8000/api/v1/update/${uuid}`, {
+      await axios.put(`http://3.80.92.37:8000/api/v1/update/${uuid}`, {
         name,
         lastname,
         phone_number: editedPhone,
@@ -132,7 +132,7 @@ const ProfileScreen = ({ navigation }) => {
     });
 
     try {
-      const response = await axios.post(`http://54.205.215.254:8000/api/v1/add/image/${uuid}`, formData, {
+      const response = await axios.post(`http://3.80.92.37:8000/api/v1/add/image/${uuid}`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
           'Accept': 'application/json',

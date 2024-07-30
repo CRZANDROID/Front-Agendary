@@ -11,7 +11,7 @@ const CustomDrawerContent = (props) => {
   const handleMiNegocio = async () => {
     if (user.rol === 'admin') {
       try {
-        const response = await axios.get(`http://75.101.248.20:8000/api/v1/establishment/by/${user.uuid}`, {
+        const response = await axios.get(`http://3.80.92.37:8003/api/v1/establishment/by/${user.uuid}`, {
           params: {
             user_id: user.uuid,
           },

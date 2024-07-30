@@ -70,7 +70,7 @@ const RegisterScreen = ({ navigation }) => {
     }
 
     try {
-      const response = await fetch('http://54.205.215.254:8000/api/v1/create/', {
+      const response = await fetch('http://3.80.92.37:8000/api/v1/create/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

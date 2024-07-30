@@ -1,39 +1,124 @@
 import React, { useState, useContext, useEffect } from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet, FlatList, SafeAreaView, StatusBar, ScrollView } from 'react-native';
-import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
+import { View, Text, Image, TouchableOpacity, StyleSheet, FlatList, SafeAreaView, StatusBar, ScrollView, TextInput, Alert } from 'react-native';
+import { FontAwesome, MaterialIcons, Ionicons } from '@expo/vector-icons'; 
 import axios from 'axios';
 import moment from 'moment';
 import UserContext from '../contexts/UserContext';
 
 const BusinessDetailsScreen = ({ route, navigation }) => {
   const { business } = route.params;
-  const { token } = useContext(UserContext);
-  const [isFavorite, setIsFavorite] = useState(false);
+  const { user, token } = useContext(UserContext); 
   const [gallery, setGallery] = useState([]);
+  const [comment, setComment] = useState('');
+  const [comments, setComments] = useState([]);
 
   useEffect(() => {
-    const fetchGallery = async () => {
-      try {
-        const response = await axios.get(`http://75.101.248.20:8000/api/v1/establishment/gallery/${business.uuid}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        setGallery(response.data.data);
-      } catch (error) {
-        console.error('Error fetching gallery:', error);
-      }
-    };
-
     fetchGallery();
+    fetchComments();
   }, [business.uuid, token]);
+
+  const fetchGallery = async () => {
+    try {
+      const response = await axios.get(`http://3.80.92.37:8003/api/v1/establishment/gallery/${business.uuid}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      setGallery(response.data.data);
+    } catch (error) {
+      console.error('Error fetching gallery:', error);
+    }
+  };
+
+  const fetchComments = async () => {
+    try {
+      const response = await axios.get(`http://3.80.92.37:8003/api/v1comment/establishment/${business.uuid}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
+        }
+      });
+      setComments(response.data.data);
+    } catch (error) {
+      console.error('Error fetching comments:', error);
+      if (error.response) {
+        Alert.alert('Error', `Hubo un problema al obtener los comentarios: ${error.response.status}`);
+      } else if (error.request) {
+        Alert.alert('Error', 'No se recibió respuesta del servidor. Por favor, inténtelo de nuevo.');
+      } else {
+        Alert.alert('Error', 'Hubo un problema al configurar la solicitud. Por favor, inténtelo de nuevo.');
+      }
+    }
+  };
 
   const handleScheduleAppointment = () => {
     navigation.navigate('ScheduleAppointment', { business });
   };
 
-  const handleFavoriteToggle = () => {
-    setIsFavorite(!isFavorite);
+  const handleCommentSubmit = async () => {
+    if (comment) {
+      try {
+        console.log('Sending sentiment analysis request...');
+        const sentimentResponse = await axios.post(
+          'http://54.82.143.58:8004/analizar/', 
+          { comentario: comment },
+          {
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+  
+        console.log('Sentiment analysis response:', sentimentResponse.data);
+        const sentimentData = sentimentResponse.data;
+  
+        if (sentimentData.mensaje) {
+          Alert.alert('Advertencia', sentimentData.mensaje);
+          return;
+        }
+  
+        const sentimentRating = Math.round(parseFloat(sentimentData.calificacion));
+  
+        const commentData = {
+          user_id: user.uuid,
+          establishment_id: business.uuid,
+          comment: comment,
+          rating: sentimentRating,
+        };
+  
+        console.log('Sending comment data:', commentData);
+        const commentResponse = await axios.post(
+          'http://3.80.92.37:8003/api/v1/comment/create/', 
+          commentData,
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            }
+          }
+        );
+  
+        console.log('Comment creation response:', commentResponse.data);
+        setComment('');
+        fetchComments(); 
+      } catch (error) {
+        if (error.response) {
+          console.error('Response error:', error.response.data);
+          if (error.response.status === 400 && error.response.data.detail === "El texto contiene groserías.") {
+            Alert.alert('Advertencia', 'El texto contiene groserías. Por favor, modifique su comentario.');
+          } else {
+            Alert.alert('Error', 'Hubo un problema al enviar el comentario. Por favor, inténtelo de nuevo.');
+          }
+        } else if (error.request) {
+          console.error('Request error:', error.request);
+          Alert.alert('Error', 'No se recibió respuesta del servidor. Por favor, inténtelo de nuevo.');
+        } else {
+          console.error('Setup error:', error.message);
+          Alert.alert('Error', 'Hubo un problema al configurar la solicitud. Por favor, inténtelo de nuevo.');
+        }
+      }
+    }
   };
 
   const formatBusinessHours = (opening, closing) => {
@@ -88,12 +173,34 @@ const BusinessDetailsScreen = ({ route, navigation }) => {
               </View>
             </>
           )}
+          <Text style={styles.sectionTitle}>Comentarios</Text>
+          {comments.map((commentItem, index) => (
+            <View key={commentItem.uuid} style={styles.commentContainer}>
+              <Text style={styles.commentText}>{commentItem._comment}</Text>
+              <View style={styles.commentRatingContainer}>
+                {[...Array(5)].map((_, starIndex) => (
+                  <FontAwesome key={starIndex} name="star" size={16} color={commentItem._rating > starIndex ? '#FFD700' : 'gray'} />
+                ))}
+              </View>                 
+            </View>
+          ))}
+          <View style={styles.commentInputContainer}>
+            <View style={styles.inputRow}>
+              <TextInput
+                style={styles.commentInput}
+                placeholder="Escribe un comentario..."
+                value={comment}
+                onChangeText={setComment}
+                multiline
+              />
+              <TouchableOpacity style={styles.sendButton} onPress={handleCommentSubmit}>
+                <Ionicons name="send-outline" size={24} color="#268AAB" />
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
       </ScrollView>
       <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.favoriteButton} onPress={handleFavoriteToggle}>
-          <FontAwesome name="heart" size={24} color={isFavorite ? 'red' : 'gray'} />
-        </TouchableOpacity>
         <TouchableOpacity style={styles.agendarButton} onPress={handleScheduleAppointment}>
           <Text style={styles.agendarButtonText}>Agendar</Text>
         </TouchableOpacity>
@@ -192,23 +299,56 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginHorizontal: 10,
   },
+  commentContainer: {
+    backgroundColor: '#f9f9f9',
+    borderRadius: 10,
+    padding: 15,
+    marginVertical: 5,
+    elevation: 2,
+  },
+  commentText: {
+    fontSize: 16,
+    marginBottom: 5,
+    color: '#333',
+  },
+  commentRatingContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+  },
+  commentInputContainer: {
+    marginVertical: 10,
+    padding: 15,
+    backgroundColor: '#f1f1f1',
+    borderRadius: 10,
+  },
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  commentInput: {
+    flex: 1,
+    borderColor: '#ccc',
+    borderWidth: 1,
+    borderRadius: 5,
+    padding: 10,
+  },
+  sendButton: {
+    marginLeft: 10,
+  },
+  submitButton: {
+    backgroundColor: '#268AAB',
+    padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+  },
+  submitButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
   buttonContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    margin: 20,
-  },
-  favoriteButton: {
-    backgroundColor: '#fff',
-    borderRadius: 30,
-    width: 50,
-    height: 50,
-    alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 3,
-    elevation: 5,
+    margin: 20,
   },
   agendarButton: {
     backgroundColor: '#268AAB',
@@ -216,7 +356,6 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: 'center',
     flex: 1,
-    marginLeft: 10,
   },
   agendarButtonText: {
     color: '#fff',
@@ -226,5 +365,16 @@ const styles = StyleSheet.create({
 });
 
 export default BusinessDetailsScreen;
+
+
+
+
+
+
+
+
+
+
+
 
 

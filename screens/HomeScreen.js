@@ -38,7 +38,7 @@ const HomeScreen = () => {
   useEffect(() => {
     const fetchEstablishments = async () => {
       try {
-        const response = await axios.get('http://75.101.248.20:8000/api/v1/establishment', {
+        const response = await axios.get('http://3.80.92.37:8003/api/v1/establishment', {
           headers: {
             Authorization: `Bearer ${token}`,
           },

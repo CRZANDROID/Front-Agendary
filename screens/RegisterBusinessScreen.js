@@ -26,7 +26,7 @@ const RegisterBusinessScreen = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await axios.get('http://75.101.248.20:8000/api/v1/category');
+        const response = await axios.get('http://3.80.92.37:8003/api/v1/category');
         setCategories(response.data.data);
       } catch (error) {
         console.error('Error fetching categories:', error);
@@ -57,7 +57,7 @@ const RegisterBusinessScreen = () => {
     };
 
     try {
-      await axios.post(`http://75.101.248.20:8000/api/v1/establishment/create/${user_id}`, establishment, {
+      await axios.post(`http://3.80.92.37:8003/api/v1/establishment/create/${user_id}`, establishment, {
         headers: {
           Authorization: `Bearer ${token}`,
         }
@@ -66,7 +66,7 @@ const RegisterBusinessScreen = () => {
       Alert.alert('Éxito', 'Negocio registrado correctamente');
 
       
-      await axios.put(`http://54.205.215.254:8000/api/v1/upgrade/role/${user_id}`, null, {
+      await axios.put(`http://3.80.92.37:8000/api/v1/upgrade/role/${user_id}`, null, {
         headers: {
           Authorization: `Bearer ${token}`,
         }

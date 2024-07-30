@@ -18,7 +18,7 @@ const WorkAgendaScreen = ({ route, navigation }) => {
   useEffect(() => {
     const fetchAppointments = async () => {
       try {
-        const response = await axios.get(`http://75.101.248.20:8001/api/v1/establishment/${establishmentId}`, {
+        const response = await axios.get(`http://3.80.92.37:8003/api/v1/establishment/${establishmentId}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },

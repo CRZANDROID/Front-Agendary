@@ -5,16 +5,22 @@ import axios from 'axios';
 import moment from 'moment';
 import UserContext from '../contexts/UserContext';
 import { useFocusEffect } from '@react-navigation/native';
+import { LineChart } from 'react-native-chart-kit';
+import { Dimensions } from 'react-native';
+
+const screenWidth = Dimensions.get("window").width;
 
 const BusinessPreviewScreen = ({ navigation }) => {
   const { user, token } = useContext(UserContext);
   const [business, setBusiness] = useState(null);
   const [gallery, setGallery] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [comments, setComments] = useState([]);
+  const [ratingsData, setRatingsData] = useState(null);
 
   const fetchBusiness = async () => {
     try {
-      const response = await axios.get(`http://75.101.248.20:8000/api/v1/establishment/by/${user.uuid}`, {
+      const response = await axios.get(`http://3.80.92.37:8003/api/v1/establishment/by/${user.uuid}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -22,11 +28,13 @@ const BusinessPreviewScreen = ({ navigation }) => {
         const businessData = response.data.data[0];
         setBusiness(businessData);
 
-      
-        const galleryResponse = await axios.get(`http://75.101.248.20:8000/api/v1/establishment/gallery/${businessData.uuid}`, {
+        const galleryResponse = await axios.get(`http://3.80.92.37:8003/api/v1/establishment/gallery/${businessData.uuid}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setGallery(galleryResponse.data.data);
+
+        fetchComments(businessData.uuid);
+        fetchRatingsData(businessData.uuid);
       } else {
         Alert.alert('Error', 'No se encontró el negocio');
       }
@@ -35,6 +43,64 @@ const BusinessPreviewScreen = ({ navigation }) => {
       Alert.alert('Error', 'No se pudo obtener la información del negocio');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchComments = async (businessId) => {
+    try {
+      const response = await axios.get(`http://3.80.92.37:8003/api/v1comment/establishment/${businessId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
+        }
+      });
+      setComments(response.data.data);
+    } catch (error) {
+      console.error('Error fetching comments:', error);
+      if (error.response) {
+        Alert.alert('Error', `Hubo un problema al obtener los comentarios: ${error.response.status}`);
+      } else if (error.request) {
+        Alert.alert('Error', 'No se recibió respuesta del servidor. Por favor, inténtelo de nuevo.');
+      } else {
+        Alert.alert('Error', 'Hubo un problema al configurar la solicitud. Por favor, inténtelo de nuevo.');
+      }
+    }
+  };
+
+  const fetchRatingsData = async (businessId) => {
+    try {
+      const response = await axios.get(`http://3.80.92.37:8003/api/v1/comments/ratings_over_time/${businessId}/1D`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
+        }
+      });
+
+      const ratings = response.data.data.map(item => ({
+        date: moment(item.date).format('DD MMM'),
+        rating: item.rating
+      }));
+
+      setRatingsData({
+        labels: ratings.map(r => r.date),
+        datasets: [
+          {
+            data: ratings.map(r => r.rating),
+            color: (opacity = 1) => `rgba(134, 65, 244, ${opacity})`,
+            strokeWidth: 2
+          }
+        ],
+        legend: ["Predicción de desempeño"]
+      });
+    } catch (error) {
+      console.error('Error fetching ratings data:', error);
+      if (error.response) {
+        Alert.alert('Error', `Hubo un problema al obtener los datos de calificaciones: ${error.response.status}`);
+      } else if (error.request) {
+        Alert.alert('Error', 'No se recibió respuesta del servidor. Por favor, inténtelo de nuevo.');
+      } else {
+        Alert.alert('Error', 'Hubo un problema al configurar la solicitud. Por favor, inténtelo de nuevo.');
+      }
     }
   };
 
@@ -126,6 +192,49 @@ const BusinessPreviewScreen = ({ navigation }) => {
                 />
               </View>
             </>
+          )}
+          <Text style={styles.sectionTitle}>Comentarios</Text>
+          <View style={styles.commentsContainer}>
+            {comments.map(comment => (
+              <View key={comment.uuid} style={styles.comment}>
+                <Text style={styles.commentUser}>Usuario anónimo</Text>
+                <Text style={styles.commentText}>{comment._comment}</Text>
+                <View style={styles.commentRatingContainer}>
+                  {[...Array(5)].map((_, starIndex) => (
+                    <FontAwesome key={starIndex} name="star" size={16} color={comment._rating > starIndex ? '#FFD700' : 'gray'} />
+                  ))}
+                </View>
+              </View>
+            ))}
+          </View>
+          <Text style={styles.sectionTitle}>Predicción de Desempeño</Text>
+          {ratingsData && (
+            <LineChart
+              data={ratingsData}
+              width={screenWidth - 40}
+              height={220}
+              chartConfig={{
+                backgroundColor: '#e26a00',
+                backgroundGradientFrom: '#fb8c00',
+                backgroundGradientTo: '#ffa726',
+                decimalPlaces: 2,
+                color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+                labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+                style: {
+                  borderRadius: 16
+                },
+                propsForDots: {
+                  r: "6",
+                  strokeWidth: "2",
+                  stroke: "#ffa726"
+                }
+              }}
+              bezier
+              style={{
+                marginVertical: 8,
+                borderRadius: 16
+              }}
+            />
           )}
         </View>
       </ScrollView>
@@ -256,6 +365,22 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginHorizontal: 10,
   },
+  commentsContainer: {
+    marginTop: 10,
+  },
+  comment: {
+    marginBottom: 10,
+  },
+  commentUser: {
+    fontWeight: 'bold',
+  },
+  commentText: {
+    marginTop: 5,
+  },
+  commentRatingContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+  },
   footerButtons: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -295,6 +420,7 @@ const styles = StyleSheet.create({
 });
 
 export default BusinessPreviewScreen;
+
 
 
 

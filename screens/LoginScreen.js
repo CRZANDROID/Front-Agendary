@@ -17,7 +17,7 @@ const LoginScreen = ({ navigation }) => {
       return;
     }
 
-    const url = `http://54.205.215.254:8000/api/v1/login`;
+    const url = `http://3.80.92.37:8000/api/v1/login`;
 
     try {
       const response = await axios.post(url, {
@@ -38,7 +38,7 @@ const LoginScreen = ({ navigation }) => {
         setToken(result.data.token);
 
         
-        const userResponse = await axios.get(`http://54.205.215.254:8000/api/v1/find/${email}`, {
+        const userResponse = await axios.get(`http://3.80.92.37:8000/api/v1/find/${email}`, {
           headers: {
             Authorization: `Bearer ${result.data.token}`,
           },

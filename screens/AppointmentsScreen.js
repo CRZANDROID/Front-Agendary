@@ -15,7 +15,7 @@ const AppointmentsScreen = ({ navigation }) => {
   useEffect(() => {
     const fetchAppointments = async () => {
       try {
-        const response = await axios.get(`http://75.101.248.20:8001/api/v1/user/${user.uuid}`, {
+        const response = await axios.get(`http://3.80.92.37:8001/api/v1/user/${user.uuid}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -24,7 +24,7 @@ const AppointmentsScreen = ({ navigation }) => {
         
         const appointmentsWithEstablishmentNames = await Promise.all(response.data.data.map(async (appointment) => {
           try {
-            const establishmentResponse = await axios.get(`http://75.101.248.20:8000/api/v1/establishment/${appointment.establishment_id}`, {
+            const establishmentResponse = await axios.get(`http://3.80.92.37:8001/api/v1/establishment/${appointment.establishment_id}`, {
               headers: {
                 Authorization: `Bearer ${token}`,
               },

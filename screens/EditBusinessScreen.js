@@ -30,7 +30,7 @@ const EditBusinessScreen = ({ route, navigation }) => {
   useEffect(() => {
     const fetchGalleryImages = async () => {
       try {
-        const response = await axios.get(`http://75.101.248.20:8000/api/v1/establishment/gallery/${business.uuid}`, {
+        const response = await axios.get(`http://3.80.92.37:8003/api/v1/establishment/gallery/${business.uuid}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -48,7 +48,7 @@ const EditBusinessScreen = ({ route, navigation }) => {
 
   const handleSave = async () => {
     try {
-      await axios.put(`http://75.101.248.20:8000/api/v1/establishment/update/${business.uuid}`, {
+      await axios.put(`http://3.80.92.37:8003/api/v1/establishment/update/${business.uuid}`, {
         name,
         description,
         opening_hours: moment(openingTime).format('HH:mm:ss'),
@@ -84,7 +84,7 @@ const EditBusinessScreen = ({ route, navigation }) => {
     try {
       const response = await axios({
         method: 'post',
-        url: `http://75.101.248.20:8000/api/v1/establishment/add/portrait/${business.uuid}`,
+        url: `http://3.80.92.37:8003/api/v1/establishment/add/portrait/${business.uuid}`,
         data: formData,
         headers: {
           'Content-Type': 'multipart/form-data',
@@ -121,7 +121,7 @@ const EditBusinessScreen = ({ route, navigation }) => {
     try {
       const response = await axios({
         method: 'post',
-        url: `http://75.101.248.20:8000/api/v1/establishment/add/gallery/${business.uuid}`,
+        url: `http://3.80.92.37:8003/api/v1/establishment/add/gallery/${business.uuid}`,
         data: formData,
         headers: {
           'Content-Type': 'multipart/form-data',
@@ -131,7 +131,7 @@ const EditBusinessScreen = ({ route, navigation }) => {
       });
   
       console.log('Gallery images uploaded successfully', response.data);
-      const updatedGalleryResponse = await axios.get(`http://75.101.248.20:8000/api/v1/establishment/gallery/${business.uuid}`, {
+      const updatedGalleryResponse = await axios.get(`http://3.80.92.37:8003/api/v1/establishment/gallery/${business.uuid}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -188,13 +188,13 @@ const EditBusinessScreen = ({ route, navigation }) => {
 
   const handleDeleteGalleryImage = async (imageId) => {
     try {
-      await axios.delete(`http://75.101.248.20:8000/api/v1/establishment/gallery/${imageId}`, {
+      await axios.delete(`http://3.80.92.37:8003/api/v1/establishment/gallery/${imageId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
-      const updatedGalleryResponse = await axios.get(`http://75.101.248.20:8000/api/v1/establishment/gallery/${business.uuid}`, {
+      const updatedGalleryResponse = await axios.get(`http://3.80.92.37:8003/api/v1/establishment/gallery/${business.uuid}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
